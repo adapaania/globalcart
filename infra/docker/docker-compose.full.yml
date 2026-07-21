@@ -1,0 +1,41 @@
+# Full stack — runs ALL apps + the agent orchestrator together.
+# Usage (from repo root):
+#   docker compose -f infra/docker/docker-compose.full.yml up --build
+#
+# Note: ticketflow, employee-self-service, and agent-orchestrator are scaffolds
+# for the coming weeks. globalcart is fully implemented today.
+services:
+  globalcart-backend:
+    build: ../../apps/globalcart/backend
+    container_name: globalcart-backend
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+  globalcart-frontend:
+    build: ../../apps/globalcart/frontend
+    container_name: globalcart-frontend
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_TARGET=http://globalcart-backend:8000
+    depends_on:
+      - globalcart-backend
+    restart: unless-stopped
+
+  # ---- Coming next (scaffold) ----
+  # ticketflow-backend:
+  #   build: ../../apps/ticketflow/backend
+  #   ports: ["8001:8001"]
+  #
+  # ess-backend:
+  #   build: ../../apps/employee-self-service/backend
+  #   ports: ["8002:8002"]
+  #
+  # agent-orchestrator:
+  #   build: ../../services/agent-orchestrator
+  #   environment:
+  #     - GLOBALCART_BASE_URL=http://globalcart-backend:8000
+  #     - TICKETFLOW_BASE_URL=http://ticketflow-backend:8001
+  #     - IDENTITY_BASE_URL=http://ess-backend:8002
+  #   depends_on: [globalcart-backend]

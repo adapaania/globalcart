@@ -2,13 +2,31 @@
 __pycache__/
 *.pyc
 .venv/
-backend/globalcart.db
+venv/
+*.db
 
 # Node
 node_modules/
-frontend/dist/
+dist/
 .vite/
 npm-debug.log*
 
-# OS
+# Env
+.env
+*.local
+
+# Auto-generated doc previews (we keep source .md only)
+*.pdf
+*.docx
+
+# Test / tooling caches
+.pytest_cache/
+.ruff_cache/
+
+# Editor / OS
 .DS_Store
+.idea/
+.vscode/
+
+# Repo housekeeping
+.abacus.donotdelete

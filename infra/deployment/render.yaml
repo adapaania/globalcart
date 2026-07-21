@@ -1,0 +1,28 @@
+# Render.com blueprint (scaffold).
+# Deploys the GlobalCart backend and frontend. Extend with the other apps and
+# the agent-orchestrator as they are implemented.
+# Docs: https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: globalcart-backend
+    runtime: docker
+    dockerfilePath: apps/globalcart/backend/Dockerfile
+    dockerContext: apps/globalcart/backend
+    plan: free
+    envVars:
+      - key: BACKEND_PORT
+        value: "8000"
+    healthCheckPath: /health
+
+  - type: web
+    name: globalcart-frontend
+    runtime: docker
+    dockerfilePath: apps/globalcart/frontend/Dockerfile
+    dockerContext: apps/globalcart/frontend
+    plan: free
+    envVars:
+      - key: VITE_API_TARGET
+        fromService:
+          name: globalcart-backend
+          type: web
+          property: hostport

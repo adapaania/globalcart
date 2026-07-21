@@ -1,0 +1,19 @@
+# Employee Self-Service — Docker Compose (scaffold, coming next in Week 1)
+services:
+  backend:
+    build: ./backend
+    container_name: ess-backend
+    ports:
+      - "8002:8002"
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    container_name: ess-frontend
+    ports:
+      - "5175:5173"
+    environment:
+      - VITE_API_TARGET=http://backend:8002
+    depends_on:
+      - backend
+    restart: unless-stopped

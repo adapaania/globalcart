@@ -1,0 +1,18 @@
+{
+  "ticket_id": "GT-002",
+  "channel": "portal",
+  "subject": "Need to reset my MFA",
+  "body": "I got a new phone and lost my authenticator app. Please reset my MFA so I can enroll again.",
+  "user": {
+    "name": "Priya Nair",
+    "email": "priya.nair@example.com",
+    "account_type": "standard"
+  },
+  "context": {
+    "system": "employee-self-service"
+  },
+  "expected_route": "L1",
+  "expected_tools": ["identity.get_employee", "identity.reset_mfa"],
+  "expected_policy": "knowledge-base/policies/mfa-reset-policy.md",
+  "expected_outcome": "Identity verified, MFA reset for standard account, user prompted to re-enroll."
+}

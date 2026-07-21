@@ -1,0 +1,10 @@
+# Agent Orchestrator dependencies (Week 2/3 scaffold)
+fastapi==0.111.0
+uvicorn[standard]==0.30.1
+httpx==0.27.0
+pydantic==2.7.1
+# Agent / RAG stack (uncomment & pin as implemented in Week 2/3)
+# langchain
+# langgraph
+# openai
+# chromadb

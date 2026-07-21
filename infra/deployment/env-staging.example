@@ -1,0 +1,23 @@
+# Staging environment template (scaffold).
+# Copy to your deployment provider's secret manager — do NOT commit real values.
+
+# ---- GlobalCart ----
+GLOBALCART_BACKEND_PORT=8000
+GLOBALCART_DATABASE_URL=sqlite:///./globalcart.db
+
+# ---- TicketFlow (coming next) ----
+TICKETFLOW_BACKEND_PORT=8001
+TICKETFLOW_DATABASE_URL=sqlite:///./ticketflow.db
+
+# ---- Employee Self-Service (coming next) ----
+ESS_BACKEND_PORT=8002
+ESS_DATABASE_URL=sqlite:///./ess.db
+
+# ---- Agent Orchestrator (Week 2/3) ----
+GLOBALCART_BASE_URL=http://globalcart-backend:8000
+TICKETFLOW_BASE_URL=http://ticketflow-backend:8001
+IDENTITY_BASE_URL=http://ess-backend:8002
+# OPENAI_API_KEY=replace-me
+
+# ---- Deploy hook (used by deploy-staging.yml) ----
+# STAGING_DEPLOY_HOOK=replace-me

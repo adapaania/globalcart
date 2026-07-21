@@ -1,0 +1,20 @@
+{
+  "ticket_id": "GT-003",
+  "channel": "phone",
+  "subject": "Locked out of my account",
+  "body": "I tried logging in a few times with the wrong password and now I'm locked out. Can you help me get back in?",
+  "user": {
+    "name": "Carlos Diaz",
+    "email": "carlos.diaz@example.com",
+    "account_type": "standard"
+  },
+  "context": {
+    "system": "employee-self-service",
+    "lock_reason": "too_many_failed_attempts",
+    "risk_flag": false
+  },
+  "expected_route": "L1",
+  "expected_tools": ["identity.get_employee", "identity.unlock_account"],
+  "expected_runbook": "knowledge-base/runbooks/account-lockout-runbook.md",
+  "expected_outcome": "Identity verified, account unlocked, user advised on password reset if needed."
+}

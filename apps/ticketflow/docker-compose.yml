@@ -1,0 +1,20 @@
+# TicketFlow — Docker Compose (scaffold, coming next in Week 1)
+# Mirrors the globalcart layout: a FastAPI backend + React/Vite frontend.
+services:
+  backend:
+    build: ./backend
+    container_name: ticketflow-backend
+    ports:
+      - "8001:8001"
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    container_name: ticketflow-frontend
+    ports:
+      - "5174:5173"
+    environment:
+      - VITE_API_TARGET=http://backend:8001
+    depends_on:
+      - backend
+    restart: unless-stopped

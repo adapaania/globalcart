@@ -1,133 +1,85 @@
-# GlobalCart — Order Management System
+# Agentic IT Support Simulation
 
-A simulated internal Order Management application for the fictional "GlobalCart"
-retailer. It lets a support agent look up an order, review its customer-facing
-timeline, inspect internal system logs & diagnostics, and trigger a manual sync
-to unstick orders.
+A teaching monorepo for building an **agentic IT support system** step by step.
+It contains several simulated business applications, a shared knowledge base of
+policies and runbooks, and an agent orchestrator that (in later weeks) resolves
+support tickets by calling those apps' APIs and grounding its decisions in the
+knowledge base via RAG.
 
-- **Backend:** FastAPI + SQLAlchemy (SQLite)
-- **Frontend:** React + Vite + Tailwind CSS
-- **Orchestration:** Docker Compose
+> **Where we are today:** the **GlobalCart** app (`apps/globalcart`) is fully
+> implemented and demoable. The other apps, the agent orchestrator, and the RAG
+> pipeline are scaffolded and land over the coming weeks.
 
----
+## Repository structure
 
-## Quick Start (Docker)
+```
+agentic-it-support-simulation/
+├── .github/                  # CI, deploy, PR & issue templates
+├── apps/
+│   ├── globalcart/           # ✅ Order Management System (implemented)
+│   ├── ticketflow/           # 🚧 IT Service Desk (Week 1)
+│   └── employee-self-service/# 🚧 Identity / IAM portal (Week 1)
+├── services/
+│   └── agent-orchestrator/   # 🚧 Supervisor + L1/L2 agents, tools, RAG (Week 2/3)
+├── knowledge-base/           # Policies + runbooks (RAG source)
+├── infra/                    # Docker (full stack) + deployment config
+├── tests/                    # Integration tests + golden tickets
+├── docs/                     # Architecture, API contracts, ADRs, demo scripts
+├── .env.example              # Root shared env template
+├── CONTRIBUTING.md
+└── README.md
+```
+
+## Quick start — GlobalCart
 
 ```bash
+cd apps/globalcart
 docker-compose up --build
 ```
 
-Then open the app in your browser:
-
 - **Frontend UI:** http://localhost:5173
-- **Backend API:** http://localhost:8000
-- **API health check:** http://localhost:8000/health
+- **Backend API:** http://localhost:8000  (health: `/health`)
 
-The backend auto-creates the SQLite database and seeds it with the demo orders
-on first startup (only when the database is empty).
+See [`apps/globalcart/README.md`](./apps/globalcart/README.md) for full details,
+local (non-Docker) setup, the demo order IDs, and API docs.
 
-To stop:
-
-```bash
-docker-compose down
-```
-
----
-
-## Running Locally (without Docker)
-
-### Backend
+### Run the whole stack (as apps come online)
 
 ```bash
-cd backend
-python -m venv .venv
-source .venv/bin/activate          # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-uvicorn main:app --reload --port 8000
+docker compose -f infra/docker/docker-compose.full.yml up --build
 ```
 
-The database is seeded automatically on startup. To seed manually:
+## Running tests
 
 ```bash
-python seed_data.py
+pip install -r apps/globalcart/backend/requirements.txt pytest httpx
+pytest tests/integration -v
 ```
 
-### Frontend
+GlobalCart tests run today; TicketFlow and agent-routing tests are skipped until
+those components are implemented.
 
-```bash
-cd frontend
-npm install
-npm run dev -- --host
-```
+## Documentation
 
-The Vite dev server proxies `/api` to `http://localhost:8000` (override with the
-`VITE_API_TARGET` environment variable).
+- [System architecture](./docs/architecture/system-diagram.md)
+- API contracts:
+  [GlobalCart](./docs/api-contracts/globalcart-api.md) ·
+  [TicketFlow](./docs/api-contracts/ticketflow-api.md) ·
+  [Identity](./docs/api-contracts/identity-api.md)
+- [ADR-001: Tech stack](./docs/decisions/ADR-001-tech-stack.md)
+- [Week 1 demo script](./docs/demo-scripts/week1-demo.md)
+- [Knowledge base](./knowledge-base) — policies & runbooks
 
----
+## Roadmap
 
-## Test Order IDs
+| Week    | Deliverable                                                            |
+|---------|------------------------------------------------------------------------|
+| Week 0  | ✅ GlobalCart app (orders, diagnostics, manual sync) + monorepo scaffold |
+| Week 1  | 🚧 TicketFlow + Employee Self-Service apps                             |
+| Week 2  | 🚧 Knowledge base + RAG ingestion & retrieval                          |
+| Week 2/3| 🚧 Agent orchestrator: supervisor + L1/L2 agents, tools, routing       |
 
-| Order ID  | Scenario                                                                 |
-|-----------|--------------------------------------------------------------------------|
-| `GC-1001` | Normal order — DELIVERED, payment SUCCESS. Everything green.             |
-| `GC-1042` | Payment SUCCESS but stuck in PROCESSING. System log ERROR `Validation_Error: Warehouse_API_Timeout`. Use **Sync Order** to advance it to SHIPPED. |
-| `GC-2020` | HELD high-value order ($5,200). System log WARN `HIGH_VALUE_ORDER: Manual financial verification required`. |
-| `GC-3030` | PENDING order. System log ERROR `SKU_OUT_OF_STOCK: Item PROD-887 unavailable`. |
+## Contributing
 
----
-
-## API Endpoints
-
-| Method | Path                              | Description                                                                                     |
-|--------|-----------------------------------|-------------------------------------------------------------------------------------------------|
-| `GET`  | `/health`                         | Health check. Returns `{"status": "ok"}`.                                                       |
-| `GET`  | `/api/orders/{order_id}`          | Full customer-facing order: details + timeline events. **Excludes** internal system logs.       |
-| `GET`  | `/api/diagnostics/{order_id}`     | Internal state: system logs, extracted `error_codes`, and a `recommended_action`.               |
-| `POST` | `/api/orders/{order_id}/sync`     | Simulates a manual sync. If the order is stuck in `PROCESSING`, moves it to `SHIPPED`, appends a "Manual sync triggered by agent" timeline event, and returns the updated order. |
-
-### Example requests
-
-```bash
-# Get an order
-curl http://localhost:8000/api/orders/GC-1042
-
-# Get diagnostics (internal logs + recommended action)
-curl http://localhost:8000/api/diagnostics/GC-1042
-
-# Manually sync a stuck order
-curl -X POST http://localhost:8000/api/orders/GC-1042/sync
-```
-
----
-
-## Data Model
-
-- **Order** — `order_id`, customer name/email, `status`
-  (PROCESSING / SHIPPED / DELIVERED / HELD / PENDING), `payment_status`
-  (SUCCESS / PENDING / FAILED), `total_amount`, `items` (JSON), timestamps.
-- **OrderEvent** — customer-facing timeline events (`event_type`, `description`, `actor`).
-- **SystemLog** — internal logs (`level` INFO/WARN/ERROR, `message`, `internal_code`).
-
----
-
-## Project Structure
-
-```
-globalcart/
-├── backend/          # FastAPI + SQLAlchemy + SQLite
-│   ├── main.py
-│   ├── models.py
-│   ├── database.py
-│   ├── seed_data.py
-│   ├── requirements.txt
-│   └── Dockerfile
-├── frontend/         # React + Vite + Tailwind
-│   ├── src/
-│   │   ├── App.jsx
-│   │   ├── main.jsx
-│   │   ├── components/
-│   │   └── index.css
-│   └── Dockerfile
-├── docker-compose.yml
-└── README.md
-```
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for branching, commit conventions, and
+local checks.

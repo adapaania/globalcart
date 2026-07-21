@@ -1,0 +1,17 @@
+{
+  "ticket_id": "GT-001",
+  "channel": "email",
+  "subject": "My order hasn't shipped",
+  "body": "Hi, I placed order GC-1042 two days ago and paid, but it still says processing. Can you check what's going on?",
+  "user": {
+    "name": "Bob Martinez",
+    "email": "bob.martinez@example.com"
+  },
+  "context": {
+    "system": "globalcart",
+    "order_id": "GC-1042"
+  },
+  "expected_route": "L1",
+  "expected_tools": ["globalcart.get_diagnostics", "globalcart.sync_order"],
+  "expected_outcome": "Order re-dispatched via manual sync and moved to SHIPPED; customer notified."
+}
