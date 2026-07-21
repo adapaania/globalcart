@@ -1,0 +1,23 @@
+services:
+  backend:
+    build: ./backend
+    container_name: globalcart-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - backend_data:/app
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    container_name: globalcart-frontend
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_TARGET=http://backend:8000
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  backend_data:
