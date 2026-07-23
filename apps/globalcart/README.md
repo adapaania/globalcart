@@ -9,6 +9,22 @@ to unstick orders.
 - **Frontend:** React + Vite + Tailwind CSS
 - **Orchestration:** Docker Compose
 
+> 🌐 **Live demo:** https://globalcart-production.up.railway.app
+> Try order IDs `GC-1001`, `GC-1042`, `GC-2020`, `GC-3030`.
+
+### Deploying (single-service, Railway)
+
+The included root [`Dockerfile`](./Dockerfile) is a multi-stage build that
+compiles the Vite frontend and serves it directly from FastAPI, so the whole
+app runs from **one URL / one container**. FastAPI serves `/api/*` and falls
+back to the SPA `index.html` for all other routes. The server binds to `$PORT`
+(injected by Railway) and defaults to `8000` locally.
+
+```bash
+railway up      # from apps/globalcart/
+railway domain  # generate the public URL
+```
+
 ---
 
 ## Quick Start (Docker)
