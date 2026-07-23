@@ -30,3 +30,6 @@ npm-debug.log*
 
 # Repo housekeeping
 .abacus.donotdelete
+
+# Built frontend copied into backend for single-service deploy
+apps/globalcart/backend/static/
