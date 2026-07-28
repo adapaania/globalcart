@@ -2,10 +2,12 @@ import { useState, useCallback } from 'react'
 import SearchBar from './components/SearchBar'
 import OrderDashboard from './components/OrderDashboard'
 import SystemLogs from './components/SystemLogs'
+import OrderFormModal from './components/OrderFormModal'
 
 export default function App() {
   const [order, setOrder] = useState(null)
   const [showLogs, setShowLogs] = useState(false)
+  const [modal, setModal] = useState(null) // { mode: 'create' | 'edit' }
 
   const handleOrderFound = useCallback((data) => {
     setOrder(data)
@@ -24,6 +26,16 @@ export default function App() {
     }
   }, [])
 
+  const handleSaved = useCallback((data) => {
+    setOrder(data)
+    setModal(null)
+  }, [])
+
+  const handleDeleted = useCallback(() => {
+    setOrder(null)
+    setShowLogs(false)
+  }, [])
+
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
@@ -38,6 +50,14 @@ export default function App() {
               Order Management System
             </p>
           </div>
+          <div className="ml-auto">
+            <button
+              onClick={() => setModal({ mode: 'create' })}
+              className="px-4 py-2 rounded-lg bg-accent text-white text-sm font-medium hover:bg-blue-600 transition-colors"
+            >
+              + New Order
+            </button>
+          </div>
         </div>
       </header>
 
@@ -48,7 +68,12 @@ export default function App() {
         {order && (
           <>
             <div className="mt-8">
-              <OrderDashboard order={order} />
+              <OrderDashboard
+                order={order}
+                onEdit={() => setModal({ mode: 'edit' })}
+                onDeleted={handleDeleted}
+                onUpdated={setOrder}
+              />
             </div>
 
             <div className="mt-6">
@@ -84,6 +109,15 @@ export default function App() {
       <footer className="text-center text-xs text-slate-400 py-4">
         GlobalCart Internal Tools &middot; Order Management System
       </footer>
+
+      {modal && (
+        <OrderFormModal
+          mode={modal.mode}
+          order={modal.mode === 'edit' ? order : null}
+          onClose={() => setModal(null)}
+          onSaved={handleSaved}
+        />
+      )}
     </div>
   )
 }

@@ -33,3 +33,6 @@ npm-debug.log*
 
 # Built frontend copied into backend for single-service deploy
 apps/globalcart/backend/static/
+
+# Stray tool logs
+apps/.logs/
