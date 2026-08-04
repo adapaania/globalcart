@@ -41,6 +41,38 @@ class OrderUpdate(BaseModel):
     items: Optional[List[OrderItem]] = None
 
 
+class EventIn(BaseModel):
+    timestamp: Optional[datetime] = None
+    event_type: str
+    description: Optional[str] = ""
+    actor: Optional[str] = "system"
+
+
+class LogIn(BaseModel):
+    timestamp: Optional[datetime] = None
+    level: str = "INFO"
+    message: str
+    internal_code: Optional[str] = ""
+
+
+class OrderPushItem(BaseModel):
+    """A single record in a bulk push. If ``order_id`` matches an existing
+    order it is updated (upsert); otherwise a new order is created."""
+    order_id: Optional[str] = None
+    customer_name: Optional[str] = None
+    customer_email: Optional[str] = None
+    total_amount: Optional[float] = None
+    status: Optional[OrderStatus] = None
+    payment_status: Optional[PaymentStatus] = None
+    items: Optional[List[OrderItem]] = None
+    events: Optional[List[EventIn]] = None
+    logs: Optional[List[LogIn]] = None
+
+
+class OrderPush(BaseModel):
+    orders: List[OrderPushItem] = Field(..., min_length=1)
+
+
 # --- Helpers ------------------------------------------------------------------
 
 def _next_order_id(db: Session) -> str:
@@ -166,6 +198,116 @@ def delete_order(order_id: str, db: Session = Depends(get_db)):
     db.delete(order)  # cascade removes related events and logs
     db.commit()
     return {"deleted": True, "order_id": order_id}
+
+
+@router.post("/push")
+def push_orders(payload: OrderPush, db: Session = Depends(get_db)):
+    """Bulk data-ingest / upsert endpoint.
+
+    Accepts a batch of order records and, for each one:
+      * **Updates** the order if its ``order_id`` already exists (any provided
+        fields are overwritten; ``events`` and ``logs`` are appended).
+      * **Creates** a new order otherwise — using the supplied ``order_id`` if
+        given and free, else an auto-generated ``GC-XXXX`` id.
+
+    This lets an external system push and modify GlobalCart data in one call.
+    Returns a summary listing which ids were created vs updated.
+    """
+    now = datetime.utcnow()
+    created: List[str] = []
+    updated: List[str] = []
+    results = []
+
+    for item in payload.orders:
+        order = None
+        if item.order_id:
+            order = db.query(Order).filter(Order.order_id == item.order_id).first()
+
+        if order is None:
+            # --- create ---
+            new_id = item.order_id or _next_order_id(db)
+            order = Order(
+                order_id=new_id,
+                customer_name=item.customer_name or "Unknown",
+                customer_email=item.customer_email or "",
+                status=item.status or OrderStatus.PROCESSING,
+                payment_status=item.payment_status or PaymentStatus.PENDING,
+                total_amount=item.total_amount or 0.0,
+                items=json.dumps([i.model_dump() for i in (item.items or [])]),
+                created_at=now,
+                updated_at=now,
+            )
+            db.add(order)
+            db.flush()
+            db.add(OrderEvent(
+                order_id=order.order_id,
+                timestamp=now,
+                event_type="ORDER_CREATED",
+                description="Order created via bulk push.",
+                actor="push_api",
+            ))
+            created.append(order.order_id)
+        else:
+            # --- update / upsert ---
+            if item.customer_name is not None:
+                order.customer_name = item.customer_name
+            if item.customer_email is not None:
+                order.customer_email = item.customer_email
+            if item.total_amount is not None:
+                order.total_amount = item.total_amount
+            if item.status is not None:
+                order.status = item.status
+            if item.payment_status is not None:
+                order.payment_status = item.payment_status
+            if item.items is not None:
+                order.items = json.dumps([i.model_dump() for i in item.items])
+            order.updated_at = now
+            db.add(OrderEvent(
+                order_id=order.order_id,
+                timestamp=now,
+                event_type="ORDER_UPDATED",
+                description="Order updated via bulk push.",
+                actor="push_api",
+            ))
+            updated.append(order.order_id)
+
+        # append any supplied events
+        for ev in (item.events or []):
+            db.add(OrderEvent(
+                order_id=order.order_id,
+                timestamp=ev.timestamp or now,
+                event_type=ev.event_type,
+                description=ev.description or "",
+                actor=ev.actor or "system",
+            ))
+        # append any supplied system logs
+        for lg in (item.logs or []):
+            db.add(SystemLog(
+                order_id=order.order_id,
+                timestamp=lg.timestamp or now,
+                level=lg.level,
+                message=lg.message,
+                internal_code=lg.internal_code or "",
+            ))
+
+        db.flush()
+        results.append(order.order_id)
+
+    db.commit()
+
+    # re-serialize the affected orders
+    orders_out = []
+    for oid in results:
+        o = db.query(Order).filter(Order.order_id == oid).first()
+        if o:
+            orders_out.append(serialize_order(o, include_events=True))
+
+    return {
+        "pushed": len(results),
+        "created": created,
+        "updated": updated,
+        "orders": orders_out,
+    }
 
 
 @router.post("/{order_id}/sync")

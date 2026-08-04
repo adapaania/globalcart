@@ -100,6 +100,48 @@ Simulates a manual sync. If the order is stuck in `PROCESSING`, advances it to
 
 **404** — order not found.
 
+### `POST /api/orders/push`
+Bulk data-ingest / upsert. Accepts a batch of records; for each one, **updates**
+the order if `order_id` already exists (fields overwritten, `events`/`logs`
+appended), otherwise **creates** it (using the supplied `order_id` if given and
+free, else an auto-generated `GC-XXXX`). Lets an external system push and modify
+GlobalCart data in a single call.
+
+**Request**
+```json
+{
+  "orders": [
+    {
+      "order_id": "GC-5001",
+      "customer_name": "Ext System",
+      "customer_email": "ext@example.com",
+      "total_amount": 250.0,
+      "status": "PROCESSING",
+      "payment_status": "SUCCESS",
+      "items": [{ "sku": "PROD-1", "name": "Widget", "qty": 2, "price": 125.0 }],
+      "events": [{ "event_type": "IMPORTED", "description": "Synced from ERP", "actor": "erp" }],
+      "logs": [{ "level": "INFO", "message": "Imported via push", "internal_code": "OK_IMPORT" }]
+    },
+    { "customer_name": "No-id order (auto GC-XXXX)", "customer_email": "a@b.com", "total_amount": 10 },
+    { "order_id": "GC-1001", "status": "HELD" }
+  ]
+}
+```
+
+**200**
+```json
+{
+  "pushed": 3,
+  "created": ["GC-5001", "GC-3031"],
+  "updated": ["GC-1001"],
+  "orders": [ { "order_id": "GC-5001", "...": "..." } ]
+}
+```
+
+**422** — invalid enum value or empty `orders` list.
+
+---
+
 ## Enums
 
 - **status:** `PROCESSING`, `SHIPPED`, `DELIVERED`, `HELD`, `PENDING`
