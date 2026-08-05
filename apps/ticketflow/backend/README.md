@@ -4,6 +4,8 @@ A lean IT Service Management (ITSM) ticketing API. Budget-first: **FastAPI +
 Uvicorn + SQLite + SQLAlchemy Core + Pydantic v2**. No PostgreSQL, no Redis, no
 Celery, no Docker, no external auth provider, no paid APIs.
 
+**🚀 Live deployment:** https://ticketflow-production-1ea7.up.railway.app
+
 ## Data model
 
 **Ticket** — `id`, `title`, `description`, `status`, `priority`, `created_by`,
