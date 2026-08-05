@@ -36,3 +36,7 @@ apps/globalcart/backend/static/
 
 # Stray tool logs
 apps/.logs/
+
+# TicketFlow local env
+apps/ticketflow/backend/.env
+apps/ticketflow/backend/*.db
