@@ -15,13 +15,19 @@ echo "=========================================="
 echo -e "\n1. Health Check:"
 curl -s $GLOBALCART_BASE/health | python3 -m json.tool
 
-echo -e "\n2. Get Order GC-1001:"
+echo -e "\n2. List All Orders:"
+curl -s $GLOBALCART_BASE/api/orders | python3 -c "import sys,json;d=json.load(sys.stdin);print(f\"Total: {d['total']} | Returned: {d['count']}\")"
+
+echo -e "\n3. Filter Orders by Status:"
+curl -s "$GLOBALCART_BASE/api/orders?status=PROCESSING" | python3 -c "import sys,json;d=json.load(sys.stdin);print(f\"PROCESSING orders: {d['count']}\")"
+
+echo -e "\n4. Get Order GC-1001:"
 curl -s $GLOBALCART_BASE/api/orders/GC-1001 | python3 -c "import sys,json;d=json.load(sys.stdin);print(f\"Order: {d['order_id']} | Status: {d['status']} | Customer: {d['customer_name']}\")"
 
-echo -e "\n3. Get Diagnostics for GC-1042 (stuck order):"
+echo -e "\n5. Get Diagnostics for GC-1042 (stuck order):"
 curl -s $GLOBALCART_BASE/api/diagnostics/GC-1042 | python3 -c "import sys,json;d=json.load(sys.stdin);print(f\"Order: {d['order_id']} | Status: {d['status']} | Logs: {len(d['system_logs'])} | Action: {d['recommended_action']}\")"
 
-echo -e "\n4. Create New Order:"
+echo -e "\n6. Create New Order:"
 curl -s -X POST $GLOBALCART_BASE/api/orders \
   -H "Content-Type: application/json" \
   -d '{"customer_name":"Test User","customer_email":"test@example.com","total_amount":99.99,"status":"PROCESSING","payment_status":"PENDING","items":[{"sku":"TEST-1","name":"Test Item","qty":1,"price":99.99}]}' \
