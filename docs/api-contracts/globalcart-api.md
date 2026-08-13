@@ -5,6 +5,58 @@
 
 ## Endpoints
 
+### `GET /api/orders`
+List all orders with optional filtering and pagination.
+
+**Query Parameters:**
+- `status` (optional) — filter by order status: `PROCESSING`, `SHIPPED`, `DELIVERED`, `HELD`, `PENDING`
+- `payment_status` (optional) — filter by payment status: `SUCCESS`, `PENDING`, `FAILED`
+- `limit` (optional, default 100) — max results per page
+- `offset` (optional, default 0) — pagination offset
+
+**200**
+```json
+{
+  "total": 4,
+  "limit": 100,
+  "offset": 0,
+  "count": 4,
+  "orders": [
+    {
+      "order_id": "GC-3030",
+      "customer_name": "Diana Green",
+      "customer_email": "diana.green@example.com",
+      "status": "PENDING",
+      "payment_status": "PENDING",
+      "total_amount": 79.99,
+      "items": [...],
+      "created_at": "2026-07-22T10:05:00",
+      "updated_at": "2026-07-22T10:05:00"
+    }
+  ]
+}
+```
+
+**Examples:**
+```bash
+# List all orders
+curl https://globalcart-production.up.railway.app/api/orders
+
+# Filter by status
+curl https://globalcart-production.up.railway.app/api/orders?status=PROCESSING
+
+# Filter by payment status
+curl https://globalcart-production.up.railway.app/api/orders?payment_status=SUCCESS
+
+# Pagination
+curl https://globalcart-production.up.railway.app/api/orders?limit=10&offset=0
+
+# Combined filters
+curl https://globalcart-production.up.railway.app/api/orders?status=DELIVERED&payment_status=SUCCESS
+```
+
+---
+
 ### `GET /health`
 Health probe.
 

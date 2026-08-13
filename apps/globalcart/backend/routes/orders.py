@@ -91,6 +91,41 @@ def _next_order_id(db: Session) -> str:
 
 # --- Routes -------------------------------------------------------------------
 
+@router.get("")
+def list_orders(
+    status: Optional[str] = None,
+    payment_status: Optional[str] = None,
+    limit: int = 100,
+    offset: int = 0,
+    db: Session = Depends(get_db),
+):
+    """List all orders with optional filtering by status and payment_status.
+    
+    Query params:
+    - status: filter by order status (PROCESSING, SHIPPED, DELIVERED, HELD, PENDING)
+    - payment_status: filter by payment status (SUCCESS, PENDING, FAILED)
+    - limit: max results per page (default 100)
+    - offset: pagination offset (default 0)
+    """
+    query = db.query(Order)
+    
+    if status:
+        query = query.filter(Order.status == status)
+    if payment_status:
+        query = query.filter(Order.payment_status == payment_status)
+    
+    total = query.count()
+    orders = query.order_by(Order.created_at.desc()).offset(offset).limit(limit).all()
+    
+    return {
+        "total": total,
+        "limit": limit,
+        "offset": offset,
+        "count": len(orders),
+        "orders": [serialize_order(order, include_events=False) for order in orders],
+    }
+
+
 @router.get("/{order_id}")
 def get_order(order_id: str, db: Session = Depends(get_db)):
     """Return the full customer-facing order (details + events, NO system logs)."""
