@@ -1,0 +1,19 @@
+[Unit]
+Description=GlobalCart Order-Fix Resolver Agent
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=globalcart
+Group=globalcart
+WorkingDirectory=/opt/globalcart/app
+EnvironmentFile=/etc/globalcart/env
+ExecStart=/opt/globalcart/venv/bin/python /opt/globalcart/app/resolve_agent_v1.py
+StandardOutput=append:/opt/globalcart/logs/resolver_service.log
+StandardError=append:/opt/globalcart/logs/resolver_service.log
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/opt/globalcart/data /opt/globalcart/logs
+NoNewPrivileges=true

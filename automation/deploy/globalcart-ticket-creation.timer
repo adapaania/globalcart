@@ -1,0 +1,10 @@
+[Unit]
+Description=Run GlobalCart Ticket Creation Agent Daily at 21:00
+
+[Timer]
+OnCalendar=*-*-* 21:00:00
+Persistent=true
+Unit=globalcart-ticket-creation.service
+
+[Install]
+WantedBy=timers.target
